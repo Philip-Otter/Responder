@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import sys
+import tools.antipoison
 from packets import NBT_Ans
 from utils import *
 
@@ -33,7 +34,6 @@ class NBTNS(BaseRequestHandler):
 			# Break out if we don't want to respond to this host
 			if RespondToThisHost(self.client_address[0].replace("::ffff:",""), Name) is not True:
 				return None
-
 			if data[2:4] == b'\x01\x10':
 				if settings.Config.AnalyzeMode:  # Analyze Mode
 					print(text('[Analyze mode: NBT-NS] Request by %-15s for %s, ignoring' % (color(self.client_address[0].replace("::ffff:",""), 3), color(Name, 3))))
@@ -44,6 +44,21 @@ class NBTNS(BaseRequestHandler):
 							'AnalyzeMode': '1',
 							})
 				else:  # Poisoning Mode
+					if settings.Config.AntiPoison_On_Off:
+						if not QueryAntiPoisonTable(self.client_address[0], "CheckIfExists"):
+							SaveAntiPoisonToDb({
+								'Client': self.client_address[0],
+								'Confidence': 0
+							})
+						antipoisoner = tools.antipoison.AntiPoisonObject(settings.Config.AntiPoisonThreshold, Name, settings.Config.AntiPoisonWordList, self.client_address[0], QueryAntiPoisionTable(self.client_address[0], "getConfidence"))
+						antipoisoner.CheckRandomness()
+						SaveAntiPoisonToDb({
+								'Client': self.client_address[0],
+								'Confidence': antipoisoner.confidenceScore
+							})
+						if not antipoisoner.CheckConfidence():
+							return
+
 					if settings.Config.TTL == None:
 						Buffer1 = NBT_Ans()
 					else:
