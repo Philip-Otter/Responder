@@ -322,6 +322,7 @@ def CreateResponderDb():
 		cursor.commit()
 		cursor.execute('CREATE TABLE DHCP (timestamp TEXT, MAC TEXT, IP TEXT, RequestedIP TEXT)')
 		cursor.commit()
+		cursor.execute('CREATE TABLE AntiPoision (timestamp TEXT, Client TEXT, Confidence TEXT)')
 		cursor.close()
 
 def SaveToDb(result):
@@ -426,6 +427,36 @@ def SaveDHCPToDb(result):
 		cursor.commit()
 
 	cursor.close()
+
+def SaveAntiPoisonToDb(result):
+	for k in [ 'Client', 'Confidence']:
+		if not k in result:
+			result[k] = ''
+
+	cursor = sqlite3.connect(settings.Config.DatabaseFile)
+	cursor.text_factory = sqlite3.Binary  # We add a text factory to support different charsets
+	res = cursor.execute("SELECT COUNT(*) AS count FROM AntiPoision WHERE Client=?", (result['Client']))
+	(count,) = res.fetchone()
+        
+	if not count:
+		cursor.execute("INSERT INTO AntiPoision VALUES(datetime('now'), ?, ?)", (result['Client'], result['Confidence']))
+		cursor.commit()
+
+	cursor.close()
+
+def QueryAntiPoisonTable(client, queryType):
+	cursor = sqlite3.connect(settings.Config.DatabaseFile)
+	cursor.text_factory = sqlite3.Binary  # We add a text factory to support different charsets
+	if(queryType == "checkIfExists"):
+		res = cursor.execute("SELECT COUNT(*) AS count FROM AntiPoision WHERE Client=?", (client))
+		(count,) = res.fetchone()
+
+		if not count:
+			return False
+		
+		return True
+	elif(queryType == "getConfidence"):
+		 return cursor.execute("Select Confidence FROM AntiPosion Where Client=?", (client))
 	
 def Parse_IPV6_Addr(data):
 	if data[len(data)-4:len(data)] == b'\x00\x1c\x00\x01':
@@ -535,6 +566,7 @@ def StartupMessage():
 
 	print(color("[+] ", 2, 1) + "Poisoning Options:")
 	print('    %-27s' % "Analyze Mode" + (enabled if settings.Config.AnalyzeMode else disabled))
+	print('    %-27s' % "Antipoison Mode" + (enabled if settings.Config.AntiPoison_On_Off == True else disabled))
 	print('    %-27s' % "Force WPAD auth" + (enabled if settings.Config.Force_WPAD_Auth else disabled))
 	print('    %-27s' % "Force Basic Auth" + (enabled if settings.Config.Basic else disabled))
 	print('    %-27s' % "Force LM downgrade" + (enabled if settings.Config.LM_On_Off == True else disabled))

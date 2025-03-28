@@ -164,6 +164,7 @@ class Settings:
 		self.Force_WPAD_Auth    = options.Force_WPAD_Auth
 		self.Upstream_Proxy     = options.Upstream_Proxy
 		self.AnalyzeMode        = options.Analyze
+		self.AntiPoison_On_Off  = options.AntiPoison_On_Off
 		self.Verbose            = options.Verbose
 		self.ProxyAuth_On_Off   = options.ProxyAuth_On_Off
 		self.CommandLine        = str(sys.argv)
@@ -173,6 +174,8 @@ class Settings:
 		self.ExternalIP6        = options.ExternalIP6
 		self.Quiet_Mode			= options.Quiet
 		self.AnswerName			= options.AnswerName
+		self.AntiPoisonWordList = options.AntiPoisonWordList
+		self.AntiPoisonThreshold= options.AntiPoisonThreshold
 
 		# TTL blacklist. Known to be detected by SOC / XDR
 		TTL_blacklist = [b"\x00\x00\x00\x1e", b"\x00\x00\x00\x78", b"\x00\x00\x00\xa5"]

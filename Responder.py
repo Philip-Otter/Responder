@@ -47,6 +47,10 @@ parser.add_option('--disable-ess',         action="store_true", help="Force ESS 
 parser.add_option('-v','--verbose',        action="store_true", help="Increase verbosity.", dest="Verbose")
 parser.add_option('-t','--ttl',            action="store",      help="Change the default Windows TTL for poisoned answers. Value in hex (30 seconds = 1e). use '-t random' for random TTL", dest="TTL", metavar="1e", default=None)
 parser.add_option('-N', '--AnswerName',	   action="store",      help="Specifies the canonical name returned by the LLMNR poisoner in tits Answer section. By default, the answer's canonical name is the same as the query. Changing this value is mainly useful when attempting to perform Kebreros relaying over HTTP.", dest="AnswerName", default=None)
+
+parser.add_option('--antiPoison',		   action="store_true", help="Toggle honeypot evasion mode", dest="AntiPoison_On_Off", default=False)
+parser.add_option('--APwordlist',          action="store",      help="Set the list to use with the antipoison (honeypot evasion) mode", dest="AntiPoisonWordList")
+parser.add_option('--APthreshold',         action="store",      help="Set an antipoision threshold value that must be met by a client before posioning a request", dest="AntiPoisonThreshold")
 options, args = parser.parse_args()
 
 if not os.geteuid() == 0:
@@ -60,6 +64,14 @@ elif options.OURIP == None and IsOsX() == True:
 elif options.ProxyAuth_On_Off and options.WPAD_On_Off:
     print("\n\033[1m\033[31mYou cannot use WPAD server and Proxy_Auth server at the same time, choose one of them.\033[0m\n")
     exit(-1)
+
+if(options.AntiPoison_On_Off):
+	if(options.AntiPoisonWordList == None):
+		print("\n\033[1m\033[31mAntipoison mode enable, --APwordlist mandatory option is missing\033[0m\n")
+		exit(-1)
+	if(options.AntiPoisonThreshold == None):
+		print("\n\033[1m\033[31mAntipoison mode enable, --APthreshold mandatory option is missing\033[0m\n")
+		exit(-1)		
 
 settings.init()
 settings.Config.populate(options)
